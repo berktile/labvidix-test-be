@@ -6,7 +6,7 @@ import { ProcessedData } from 'src/models/processedData.schema';
 import { RawDocument } from 'src/models/rawDocument.schema';
 import { User } from 'src/models/user.schema';
 import { ConfigService } from '@nestjs/config';
-import { time } from 'console';
+import { timestamp } from 'rxjs';
 
 @Injectable()
 export class PackageService {
@@ -57,9 +57,21 @@ export class PackageService {
             },
           },
           {
+            $addFields: {
+              createdAt: {
+                $dateToString: {
+                  format: '%d/%m/%Y %H:%M',
+                  date: '$createdAt',
+                  timezone: 'Europe/London',
+                },
+              },
+            },
+          },
+          {
             $group: {
               _id: '$_id',
               packageName: { $first: '$packageName' },
+              createdAt: { $first: '$createdAt' },
               rawDocuments: { $push: '$rawDocuments' },
               extractedFile: { $first: '$extractedFile' },
             },
@@ -173,12 +185,14 @@ export class PackageService {
               preserveNullAndEmptyArrays: true,
             },
           },
+
           {
             $group: {
               _id: '$_id',
+              createdAt: { $first: '$createdAt' },
               packageName: { $first: '$packageName' },
               rawDocuments: { $push: '$rawDocuments' },
-              extractedFile: { $first: '$extractedFile' },
+              extractedFiles: { $push: '$extractedFile' },
             },
           },
           {
@@ -186,6 +200,7 @@ export class PackageService {
               _id: 1,
               packageName: 1,
               createdAt: 1,
+
               rawDocument: {
                 $map: {
                   input: '$rawDocuments',
@@ -196,10 +211,17 @@ export class PackageService {
                     documentUrl: '$$rawDoc.documentUrl',
                     uploadDate: '$$rawDoc.uploadDate',
                     extractedFile: {
-                      _id: '$extractedFile._id',
-                      extractedData: '$extractedFile.extractedData',
-                      extractionDate: '$extractedFile.processedDate',
-                      status: '$extractedFile.status',
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: '$extractedFiles',
+                            cond: {
+                              $eq: ['$$this._id', '$$rawDoc.processedDocument'],
+                            },
+                          },
+                        },
+                        0,
+                      ],
                     },
                   },
                 },
