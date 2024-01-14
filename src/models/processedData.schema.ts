@@ -9,7 +9,7 @@ export class ProcessedData extends MongooseDocument {
   user: User;
 
   @Prop({ type: Object, required: true })
-  extractedData: object;
+  extractedData: object[];
 
   @Prop({ type: String, ref: 'RawDocument' })
   document: RawDocument;
@@ -36,6 +36,9 @@ export class ProcessedData extends MongooseDocument {
 
   @Prop({ type: String, default: 'json' })
   fileType: string;
+
+  @Prop({ type: Number, default: 0, min: 0, max: 5 })
+  rating: number;
 }
 
 export const ProcessedDataSchema = SchemaFactory.createForClass(ProcessedData);

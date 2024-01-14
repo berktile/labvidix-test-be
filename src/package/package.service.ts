@@ -200,7 +200,6 @@ export class PackageService {
               _id: 1,
               packageName: 1,
               createdAt: 1,
-
               rawDocument: {
                 $map: {
                   input: '$rawDocuments',
@@ -211,16 +210,26 @@ export class PackageService {
                     documentUrl: '$$rawDoc.documentUrl',
                     uploadDate: '$$rawDoc.uploadDate',
                     extractedFile: {
-                      $arrayElemAt: [
+                      $mergeObjects: [
                         {
-                          $filter: {
-                            input: '$extractedFiles',
-                            cond: {
-                              $eq: ['$$this._id', '$$rawDoc.processedDocument'],
+                          $arrayElemAt: [
+                            {
+                              $filter: {
+                                input: '$extractedFiles',
+                                cond: {
+                                  $eq: [
+                                    '$$this._id',
+                                    '$$rawDoc.processedDocument',
+                                  ],
+                                },
+                              },
                             },
-                          },
+                            0,
+                          ],
                         },
-                        0,
+                        {
+                          rating: '$$rawDoc.processedData.rating',
+                        },
                       ],
                     },
                   },
