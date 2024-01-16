@@ -15,6 +15,7 @@ import {
   ProcessedDataSchema,
 } from 'src/models/processedData.schema';
 import { FileNameFilter } from './filters/FilenameFilter';
+import { PackageService } from 'src/package/package.service';
 @Module({
   imports: [
     ThrottlerModule.forRootAsync({
@@ -27,6 +28,7 @@ import { FileNameFilter } from './filters/FilenameFilter';
         },
       ],
     }),
+
     MongooseModule.forFeature([
       { name: RawDocument.name, schema: RawDocumentSchema },
       { name: User.name, schema: UserSchema },
@@ -38,6 +40,7 @@ import { FileNameFilter } from './filters/FilenameFilter';
   controllers: [UploadController],
   providers: [
     UploadService,
+    PackageService,
     FileNameFilter,
     {
       provide: APP_GUARD,

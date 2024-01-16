@@ -15,11 +15,13 @@ import { Model } from 'mongoose';
 import { Package } from 'src/models/package.schema';
 import { ProcessedData } from 'src/models/processedData.schema';
 import { Readable } from 'stream';
+import { PackageService } from 'src/package/package.service';
 
 @Injectable()
 export class UploadService {
   constructor(
     private readonly configService: ConfigService,
+    private readonly packageService: PackageService,
     @InjectModel(RawDocument.name) private rawDocumentModel: Model<RawDocument>,
     @InjectModel(User.name) private userModel: Model<User>,
     @InjectModel(Package.name) private packageModel: Model<Package>,
@@ -47,7 +49,9 @@ export class UploadService {
   async uploadFiles(
     files: Express.Multer.File[],
     userId: string,
-  ): Promise<{ response: PutObjectCommandOutput; location: string }[]> {
+  ): Promise<
+    { response: PutObjectCommandOutput; location: string; package: any }[]
+  > {
     const uploadedFiles = [];
     const user = await this.userModel.findById(userId);
 
@@ -111,6 +115,15 @@ export class UploadService {
       });
     }
 
+    const lastPackage = await this.packageService.getPackage(
+      user._id,
+      newPackage._id,
+    );
+
+    uploadedFiles.push({
+      package: lastPackage,
+    });
+
     return uploadedFiles;
   }
 
@@ -139,6 +152,7 @@ export class UploadService {
       throw new Error(error.message);
     }
   }
+
   private async waitForS3Processing(s3Key: string): Promise<any> {
     const replaceWithJson = s3Key.replace(/\.[^/.]+$/, '.json');
     const getObjectCommand = new GetObjectCommand({

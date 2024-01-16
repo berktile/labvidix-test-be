@@ -200,7 +200,7 @@ export class PackageService {
               _id: 1,
               packageName: 1,
               createdAt: 1,
-              rawDocument: {
+              rawDocuments: {
                 $map: {
                   input: '$rawDocuments',
                   as: 'rawDoc',
